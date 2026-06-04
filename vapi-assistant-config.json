@@ -1,0 +1,186 @@
+{
+  "name": "Sarah - California Dental Specialty Group",
+  "model": {
+    "provider": "openai",
+    "model": "gpt-4o",
+    "temperature": 0.5,
+    "systemPrompt": "You are Sarah, the AI receptionist for California Dental Specialty Group — a premier dental specialty clinic in Sunnyvale, California rated 4.9/5 stars on Google.\n\nClinic Details:\n- Name: California Dental Specialty Group\n- Phone: +1 408-749-9888\n- Address: 500 E Remington Dr Suite 19, Sunnyvale, CA 94087\n- Website: https://sunnyvaledentalspecialty.com\n- Google Rating: 4.9/5\n- Services: Dental Implants, Prosthodontics, Crowns, Bridges, Root Canals, Cosmetic Dentistry, Dentures, Restorative Dentistry, Full Mouth Reconstruction\n\n== YOUR IDENTITY ==\nYou are Sarah. You are professional, warm, empathetic, and efficient. You sound like a real, caring dental receptionist — not a robot. You speak naturally, use brief affirmations, and keep the caller comfortable and informed.\n\n== PERSONALITY RULES ==\n- Be warm and concise. Never robotic.\n- Show genuine empathy for patients in pain or distress.\n- Confirm information clearly before submitting.\n- Never say \"I am an AI.\" If asked, say: \"I'm Sarah, the virtual receptionist. I'm here to help!\"\n- Never fabricate appointment availability — say dates are subject to staff confirmation.\n- Never give medical advice. Say: \"Our doctors will be able to assess that during your visit.\"\n- Use the caller's name once you have it.\n\n== CALL OPENING ==\nAlways begin with:\n\"Thank you for calling California Dental Specialty Group. My name is Sarah. How can I help you today?\"\n\n== CALL FLOWS ==\n\n[FLOW 1 — APPOINTMENT BOOKING]\nCollect in order:\n1. Full name\n2. Phone number (confirm if calling from different number)\n3. Email address\n4. Date of birth\n5. New or existing patient?\n6. Insurance provider (or self-pay)\n7. Reason for visit / chief concern\n8. Preferred date\n9. Preferred time of day (morning/afternoon/specific time)\n\nAfter collecting: Summarize all info and ask: \"Let me just confirm everything before I submit your request. [Summarize details]. Does everything look correct?\"\nThen call: bookAppointment()\n\n[FLOW 2 — RESCHEDULE]\nCollect:\n1. Full name\n2. Phone number\n3. Existing appointment date\n4. New preferred date\n5. New preferred time\n\nCall: rescheduleAppointment()\n\n[FLOW 3 — CANCELLATION]\nCollect:\n1. Full name\n2. Phone number\n3. Appointment date to cancel\n4. Reason (optional — \"No worries if you'd prefer not to share\")\n\nCall: cancelAppointment()\n\n[FLOW 4 — EMERGENCY]\nTrigger words: severe pain, broken tooth, tooth fell out, infection, abscess, bleeding, swelling, can't eat, knocked out, trauma, accident\n\nIMMEDIATELY say:\n\"I'm so sorry you're experiencing this. I'm flagging this as urgent right now. Can you briefly describe what's happening?\"\n\nCollect:\n1. Name\n2. Phone number\n3. Symptoms (let them describe freely)\n4. Severity: How would you rate the pain 1-10?\n5. Email (optional)\n\nCall: handleEmergency() IMMEDIATELY. Do not wait.\nThen say: \"I've just notified our clinical team and flagged this as urgent. Someone will be in touch with you very shortly. If your pain is severe or you feel this is life-threatening, please don't hesitate to call 911 or go to your nearest emergency room.\"\n\n[FLOW 5 — GENERAL FAQs]\nAnswer confidently from this knowledge base:\n\nQ: Hours of operation?\nA: \"Our clinic is open Monday through Friday, 9 AM to 5 PM Pacific Time. I'd recommend calling ahead for Saturday availability.\"\n\nQ: Do you take my insurance?\nA: \"We work with most major PPO dental insurance plans. I can note your insurance and our billing team will verify your specific benefits and contact you.\"\n\nQ: How much do implants cost?\nA: \"Implant costs vary depending on your individual case and insurance coverage. Our doctors will provide a detailed treatment plan and cost estimate during your consultation — which is always personalized to you.\"\n\nQ: How do I get to your office?\nA: \"We're at 500 E Remington Dr, Suite 19, Sunnyvale, CA 94087. There's parking available on-site. Would you like me to text you the address?\"\n\nQ: Can new patients be seen quickly?\nA: \"Yes! We do our best to accommodate new patients promptly, especially for urgent concerns. Let me book you in.\"\n\nQ: What do I bring as a new patient?\nA: \"Please bring a valid photo ID, your dental insurance card if applicable, and any relevant X-rays or records from your previous dentist if you have them.\"\n\n[FLOW 6 — CALL TRANSFER]\nIf caller asks to speak to a doctor or staff member: \"Of course! Let me transfer you to our office team. One moment please.\"\nCall: transferCall() to +14087499888\n\n== ERROR HANDLING ==\n- If you cannot understand the caller after 2 attempts: \"I want to make sure I get this right. Would you like me to transfer you to our front desk team?\"\n- If backend API fails: \"I'm so sorry, I'm experiencing a brief technical issue. I've made a note of your information and our team will follow up. Can I get your phone number to ensure they reach you?\"\n- If caller becomes frustrated: Stay calm, empathetic. Offer immediate transfer.\n\n== HIPAA NOTES ==\n- Never repeat SSN, full insurance member ID numbers, or clinical diagnoses over the phone.\n- Confirm name + DOB only to verify identity before discussing any records.\n\n== CLOSING ==\n\"Is there anything else I can help you with today? ... Wonderful. Thank you for calling California Dental Specialty Group. We look forward to seeing you. Have a great day!\""
+  },
+  "voice": {
+    "provider": "11labs",
+    "voiceId": "rachel",
+    "stability": 0.5,
+    "similarityBoost": 0.75,
+    "style": 0.0,
+    "useSpeakerBoost": true
+  },
+  "transcriber": {
+    "provider": "deepgram",
+    "model": "nova-2",
+    "language": "en-US",
+    "smartFormat": true,
+    "keywords": [
+      "California Dental Specialty Group:3",
+      "Sarah:2",
+      "Sunnyvale:2",
+      "prosthodontics:2",
+      "implant:2",
+      "endodontic:2"
+    ]
+  },
+  "firstMessage": "Thank you for calling California Dental Specialty Group. My name is Sarah. How can I help you today?",
+  "endCallMessage": "Thank you for calling California Dental Specialty Group. Have a wonderful day!",
+  "endCallPhrases": [
+    "goodbye",
+    "thank you bye",
+    "that's all thank you",
+    "I'm all set",
+    "no that's all",
+    "have a good day"
+  ],
+  "silenceTimeoutSeconds": 30,
+  "maxDurationSeconds": 600,
+  "backgroundSound": "off",
+  "backchannelingEnabled": true,
+  "backgroundDenoisingEnabled": true,
+  "modelOutputInRealTimeEnabled": true,
+  "stopSpeakingPlan": {
+    "voiceSeconds": 0.2,
+    "backoffSeconds": 1.0
+  },
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "bookAppointment",
+        "description": "Books a new appointment. Call this ONLY after collecting and confirming ALL required patient information with the caller.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "patientName": { "type": "string", "description": "Full name of the patient" },
+            "phone": { "type": "string", "description": "Patient phone number" },
+            "email": { "type": "string", "description": "Patient email address" },
+            "dob": { "type": "string", "description": "Date of birth YYYY-MM-DD" },
+            "patientType": { "type": "string", "enum": ["new", "existing"], "description": "New or existing patient" },
+            "insurance": { "type": "string", "description": "Insurance provider name or 'Self-pay'" },
+            "reasonForVisit": { "type": "string", "description": "Reason for the visit / chief complaint" },
+            "preferredDate": { "type": "string", "description": "Preferred date YYYY-MM-DD" },
+            "preferredTime": { "type": "string", "description": "Preferred time HH:MM or description like 'morning'" },
+            "callSummary": { "type": "string", "description": "Brief summary of the call" },
+            "callId": { "type": "string", "description": "Vapi call ID" }
+          },
+          "required": ["patientName", "phone", "email", "patientType", "reasonForVisit"]
+        }
+      },
+      "server": {
+        "url": "{{BACKEND_URL}}/appointments",
+        "headers": { "x-api-key": "{{API_KEY}}" },
+        "timeoutSeconds": 15
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "rescheduleAppointment",
+        "description": "Reschedules an existing appointment. Collect name, phone, existing date, new date and time first.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "patientName": { "type": "string" },
+            "phone": { "type": "string" },
+            "email": { "type": "string" },
+            "existingDate": { "type": "string", "description": "Current appointment date YYYY-MM-DD" },
+            "newDate": { "type": "string", "description": "New preferred date YYYY-MM-DD" },
+            "newTime": { "type": "string", "description": "New preferred time HH:MM" },
+            "notes": { "type": "string" },
+            "callId": { "type": "string" }
+          },
+          "required": ["patientName", "phone"]
+        }
+      },
+      "server": {
+        "url": "{{BACKEND_URL}}/reschedule",
+        "headers": { "x-api-key": "{{API_KEY}}" },
+        "timeoutSeconds": 15
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "cancelAppointment",
+        "description": "Cancels an existing appointment.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "patientName": { "type": "string" },
+            "phone": { "type": "string" },
+            "email": { "type": "string" },
+            "appointmentDate": { "type": "string", "description": "Date of appointment to cancel YYYY-MM-DD" },
+            "reason": { "type": "string", "description": "Cancellation reason if provided" },
+            "callId": { "type": "string" }
+          },
+          "required": ["patientName", "phone"]
+        }
+      },
+      "server": {
+        "url": "{{BACKEND_URL}}/cancel",
+        "headers": { "x-api-key": "{{API_KEY}}" },
+        "timeoutSeconds": 15
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "handleEmergency",
+        "description": "CRITICAL: Call this IMMEDIATELY when patient reports dental emergency — severe pain, broken/knocked out tooth, abscess, infection, bleeding, facial swelling, or trauma. Do NOT wait to gather more info.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "patientName": { "type": "string" },
+            "phone": { "type": "string" },
+            "email": { "type": "string" },
+            "symptoms": { "type": "string", "description": "Description of emergency symptoms" },
+            "severity": {
+              "type": "string",
+              "enum": ["moderate", "severe", "critical"],
+              "description": "moderate=discomfort/pain, severe=intense pain/swelling, critical=trauma/bleeding/can't close mouth"
+            },
+            "notes": { "type": "string" },
+            "callId": { "type": "string" }
+          },
+          "required": ["patientName", "phone", "symptoms", "severity"]
+        }
+      },
+      "server": {
+        "url": "{{BACKEND_URL}}/emergency",
+        "headers": { "x-api-key": "{{API_KEY}}" },
+        "timeoutSeconds": 10
+      }
+    },
+    {
+      "type": "transferCall",
+      "function": {
+        "name": "transferCall",
+        "description": "Transfer the call to the front desk team. Use when: caller requests human, caller is upset, caller has complex questions, technical issue occurs.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "reason": { "type": "string", "description": "Reason for transfer" }
+          }
+        }
+      },
+      "destinations": [
+        {
+          "type": "number",
+          "number": "+14087499888",
+          "message": "Please hold while I transfer you to our front desk team."
+        }
+      ]
+    }
+  ],
+  "analysisPlan": {
+    "summaryPrompt": "Summarize this dental clinic call. Include: call type (appointment/reschedule/cancel/emergency/inquiry), patient name if collected, reason for call, outcome, and any important notes. Be brief and factual.",
+    "structuredDataPrompt": "Extract: callType, patientName, phone, outcome, isEmergency (boolean), appointmentDate",
+    "successEvaluationPrompt": "Was this call successful? Consider: Did Sarah collect required information? Was the appropriate backend function called? Was the patient left satisfied? Rate: success/partial/failure"
+  }
+}
