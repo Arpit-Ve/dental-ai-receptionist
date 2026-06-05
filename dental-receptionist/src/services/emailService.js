@@ -39,68 +39,50 @@ const patientConfirmationHTML = (data) => `
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    body { font-family: 'Georgia', serif; background: #f8f9fa; margin: 0; padding: 0; color: #333; }
+    body { font-family: 'Arial', sans-serif; background: #f8f9fa; margin: 0; padding: 0; color: #333; }
     .container { max-width: 600px; margin: 0 auto; background: #fff; }
-    .header { background: #1a5276; color: #fff; padding: 32px 40px; text-align: center; }
+    .header { background: #2c3e50; color: #fff; padding: 32px 40px; text-align: center; }
     .header h1 { margin: 0; font-size: 22px; font-weight: 400; letter-spacing: 1px; }
-    .header p { margin: 8px 0 0; font-size: 13px; opacity: 0.85; }
     .badge { background: #27ae60; color: white; display: inline-block; padding: 6px 20px; border-radius: 20px; font-size: 13px; margin: 24px 0 0; }
     .body { padding: 40px; }
-    .body h2 { color: #1a5276; font-size: 20px; margin-bottom: 6px; }
+    .body h2 { color: #2c3e50; font-size: 20px; margin-bottom: 6px; }
     .body p { line-height: 1.7; color: #555; }
-    .details-box { background: #f0f4f8; border-left: 4px solid #1a5276; border-radius: 6px; padding: 24px 28px; margin: 28px 0; }
+    .details-box { background: #f0f4f8; border-left: 4px solid #2c3e50; border-radius: 6px; padding: 24px 28px; margin: 28px 0; }
     .details-box table { width: 100%; border-collapse: collapse; }
     .details-box td { padding: 7px 0; font-size: 14px; vertical-align: top; }
     .details-box td:first-child { color: #666; width: 150px; font-weight: 600; }
     .details-box td:last-child { color: #222; }
-    .cta { text-align: center; margin: 32px 0; }
-    .cta a { background: #1a5276; color: #fff; text-decoration: none; padding: 14px 36px; border-radius: 6px; font-size: 15px; display: inline-block; }
     .footer { background: #f0f4f8; padding: 24px 40px; text-align: center; font-size: 12px; color: #888; }
-    .footer a { color: #1a5276; text-decoration: none; }
-    .emergency-note { background: #fdf3cd; border: 1px solid #f0c040; border-radius: 6px; padding: 16px 20px; font-size: 13px; margin-top: 20px; }
   </style>
 </head>
 <body>
 <div class="container">
   <div class="header">
-    <h1>California Dental Specialty Group</h1>
-    <p>500 E Remington Dr Suite 19, Sunnyvale, CA 94087</p>
+    <h1>Arpit Verma</h1>
     <div class="badge">✓ Appointment Request Received</div>
   </div>
 
   <div class="body">
     <h2>Hello, ${data.patientName}!</h2>
-    <p>Thank you for contacting us. Your appointment request has been received and our team will confirm your appointment within 1 business day.</p>
+    <p>Thank you for reaching out. Your appointment request has been received and will be confirmed shortly.</p>
 
     <div class="details-box">
       <table>
-        <tr><td>Patient Name</td><td>${data.patientName}</td></tr>
-        <tr><td>Patient Type</td><td>${data.patientType === 'new' ? '🆕 New Patient' : '✅ Existing Patient'}</td></tr>
-        <tr><td>Reason for Visit</td><td>${data.reasonForVisit}</td></tr>
+        <tr><td>Name</td><td>${data.patientName}</td></tr>
+        <tr><td>Type</td><td>${data.patientType === 'new' ? '🆕 New' : '✅ Returning'}</td></tr>
+        <tr><td>Reason</td><td>${data.reasonForVisit}</td></tr>
         ${data.preferredDate ? `<tr><td>Preferred Date</td><td>${data.preferredDate}</td></tr>` : ''}
         ${data.preferredTime ? `<tr><td>Preferred Time</td><td>${data.preferredTime}</td></tr>` : ''}
-        ${data.insurance ? `<tr><td>Insurance</td><td>${data.insurance}</td></tr>` : ''}
         <tr><td>Status</td><td>🟡 Pending Confirmation</td></tr>
       </table>
     </div>
 
-    <div class="emergency-note">
-      <strong>⚠️ Dental Emergency?</strong> If you are experiencing severe pain, swelling, or trauma, please call us immediately at <a href="tel:+14087499888"><strong>+1 408-749-9888</strong></a> or visit your nearest emergency room.
-    </div>
-
-    <div class="cta">
-      <a href="${process.env.CLINIC_WEBSITE}">Visit Our Website</a>
-    </div>
-
-    <p>If you have any questions, reply to this email or call us at <strong>+1 408-749-9888</strong>.</p>
-    <p>We look forward to seeing you soon!</p>
-    <p><em>— Sarah & the California Dental Specialty Group Team</em></p>
+    <p>If you have any questions, reply to this email or call <strong>+91 7982892220</strong>.</p>
+    <p><em>— Arpit Verma's Assistant</em></p>
   </div>
 
   <div class="footer">
-    <p><a href="${process.env.CLINIC_WEBSITE}">sunnyvaledentalspecialty.com</a> · +1 408-749-9888</p>
-    <p>500 E Remington Dr Suite 19, Sunnyvale, CA 94087</p>
-    <p style="font-size:10px;margin-top:8px;">This message contains protected health information. If received in error, please delete and notify us immediately.</p>
+    <p>+91 7982892220 · vermaarpit627@gmail.com</p>
   </div>
 </div>
 </body>
@@ -163,25 +145,25 @@ const staffNotificationHTML = (data, callType) => `
 
 const rescheduleConfirmHTML = (data) => `
 <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;">
-  <h2 style="color:#1a5276;">Reschedule Request Received</h2>
+  <h2 style="color:#2c3e50;">Reschedule Request Received</h2>
   <p>Hello ${data.patientName},</p>
-  <p>We've received your request to reschedule your appointment. Our team will confirm the new time shortly.</p>
+  <p>Your reschedule request has been received. It will be confirmed shortly.</p>
   <table style="width:100%;border-collapse:collapse;margin:20px 0;">
     <tr><td style="padding:8px 0;color:#666;font-weight:bold;width:150px;">Previous Date</td><td>${data.existingDate || 'On File'}</td></tr>
     <tr><td style="padding:8px 0;color:#666;font-weight:bold;">Requested Date</td><td>${data.newDate || 'Flexible'}</td></tr>
     <tr><td style="padding:8px 0;color:#666;font-weight:bold;">Requested Time</td><td>${data.newTime || 'Flexible'}</td></tr>
   </table>
-  <p>Questions? Call us: <strong>+1 408-749-9888</strong></p>
-  <p><em>— California Dental Specialty Group</em></p>
+  <p>Questions? Call: <strong>+91 7982892220</strong></p>
+  <p><em>— Arpit Verma's Assistant</em></p>
 </div>`;
 
 const cancellationConfirmHTML = (data) => `
 <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;">
-  <h2 style="color:#1a5276;">Appointment Cancellation Confirmed</h2>
+  <h2 style="color:#2c3e50;">Appointment Cancellation Confirmed</h2>
   <p>Hello ${data.patientName},</p>
   <p>Your appointment on <strong>${data.appointmentDate || 'the scheduled date'}</strong> has been cancelled as requested.</p>
-  <p>We'd love to help you schedule a new appointment when you're ready. Call us at <strong>+1 408-749-9888</strong>.</p>
-  <p><em>— California Dental Specialty Group</em></p>
+  <p>Want to reschedule? Call <strong>+91 7982892220</strong>.</p>
+  <p><em>— Arpit Verma's Assistant</em></p>
 </div>`;
 
 // ── Send email function ───────────────────────────────────────────────────────
@@ -210,7 +192,7 @@ const sendAppointmentEmails = async (data) => {
     // Patient confirmation
     sendEmail({
       to: data.email,
-      subject: 'Appointment Request Received — California Dental Specialty Group',
+      subject: 'Appointment Request Received — Arpit Verma',
       html: patientConfirmationHTML(data),
     }),
     // Staff notification
@@ -227,7 +209,7 @@ const sendRescheduleEmails = async (data) => {
   const results = await Promise.allSettled([
     sendEmail({
       to: data.email,
-      subject: 'Reschedule Request Received — California Dental Specialty Group',
+      subject: 'Reschedule Request Received — Arpit Verma',
       html: rescheduleConfirmHTML(data),
     }),
     sendEmail({
@@ -243,7 +225,7 @@ const sendCancellationEmails = async (data) => {
   const results = await Promise.allSettled([
     sendEmail({
       to: data.email,
-      subject: 'Appointment Cancellation — California Dental Specialty Group',
+      subject: 'Appointment Cancellation — Arpit Verma',
       html: cancellationConfirmHTML(data),
     }),
     sendEmail({
