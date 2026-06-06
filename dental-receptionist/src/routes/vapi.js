@@ -1,56 +1,85 @@
 const express = require('express');
 const router = express.Router();
-const crypto = require('crypto');
 const logger = require('../utils/logger');
 const sheetsService = require('../services/sheetsService');
 const emailService = require('../services/emailService');
 const { v4: uuidv4 } = require('uuid');
 
+// Store last request for debugging
+let lastWebhookRequest = null;
+
+// Debug endpoint to see last webhook request
+router.get('/last-request', (req, res) => {
+  res.json(lastWebhookRequest || { message: 'No webhook request received yet' });
+});
+
 // ── Vapi webhook handler ───────────────────────────────────────────────────────
 router.post('/webhook', async (req, res) => {
-  const { message } = req.body;
-  if (!message) return res.status(200).json({ received: true });
+  const body = req.body || {};
+  const { message } = body;
 
-  logger.info(`Vapi webhook: ${message.type}`);
+  // ALWAYS log and store the raw request for debugging
+  const bodyStr = JSON.stringify(body).substring(0, 3000);
+  logger.info(`[WEBHOOK] Received: ${bodyStr}`);
+  lastWebhookRequest = {
+    timestamp: new Date().toISOString(),
+    messageType: message?.type || 'NO_MESSAGE',
+    bodyKeys: Object.keys(body),
+    bodyPreview: bodyStr,
+  };
+
+  if (!message) {
+    logger.warn('[WEBHOOK] No message in body');
+    return res.status(200).json({ received: true });
+  }
+
+  logger.info(`[WEBHOOK] Type: ${message.type}`);
 
   switch (message.type) {
+    // ── Format 1: tool-calls (new Vapi format) ─────────────────────────────
     case 'tool-calls': {
-      // Handle ALL tool calls from Vapi
       const toolCallList = message.toolCallList || [];
       const results = [];
 
       for (const toolCall of toolCallList) {
         const { id, name, arguments: args } = toolCall;
-        logger.info(`Tool call: ${name} | ID: ${id} | Args: ${JSON.stringify(args).substring(0, 200)}`);
+        logger.info(`[TOOL-CALLS] ${name} | ID: ${id}`);
 
         let result = '';
         try {
-          switch (name) {
-            case 'bookAppointment':
-              result = await handleBookAppointment(args);
-              break;
-            case 'rescheduleAppointment':
-              result = await handleReschedule(args);
-              break;
-            case 'cancelAppointment':
-              result = await handleCancel(args);
-              break;
-            case 'handleEmergency':
-              result = await handleEmergency(args);
-              break;
-            default:
-              result = `Unknown function: ${name}`;
-          }
+          result = await routeToolCall(name, args || {});
         } catch (err) {
-          logger.error(`Tool ${name} error: ${err.message}`);
-          result = 'Request noted. Arpit will follow up.';
+          logger.error(`[TOOL-CALLS] ${name} error: ${err.message}`);
+          result = 'Request noted. Arpit will follow up shortly.';
         }
-
         results.push({ toolCallId: id, result });
       }
 
-      logger.info(`Returning ${results.length} results`);
+      logger.info(`[TOOL-CALLS] Returning ${results.length} results`);
       return res.status(200).json({ results });
+    }
+
+    // ── Format 2: function-call (legacy Vapi format) ───────────────────────
+    case 'function-call': {
+      const fn = message.functionCall || {};
+      const name = fn.name || 'unknown';
+      const args = fn.parameters || {};
+      const toolCallId = message.toolCallList?.[0]?.id || '';
+
+      logger.info(`[FUNCTION-CALL] ${name} | ID: ${toolCallId}`);
+
+      let result = '';
+      try {
+        result = await routeToolCall(name, args);
+      } catch (err) {
+        logger.error(`[FUNCTION-CALL] ${name} error: ${err.message}`);
+        result = 'Request noted. Arpit will follow up shortly.';
+      }
+
+      // Return in Vapi's expected format
+      return res.status(200).json({
+        results: [{ toolCallId, result }],
+      });
     }
 
     case 'call-started':
@@ -76,19 +105,35 @@ router.post('/webhook', async (req, res) => {
       break;
 
     default:
-      logger.debug(`Unhandled Vapi event: ${message.type}`);
+      logger.info(`[WEBHOOK] Unhandled type: ${message.type} — full body: ${bodyStr}`);
   }
 
   res.status(200).json({ received: true });
 });
 
+// ── Route tool calls to handlers ──────────────────────────────────────────────
+async function routeToolCall(name, args) {
+  switch (name) {
+    case 'bookAppointment':
+      return await handleBookAppointment(args);
+    case 'rescheduleAppointment':
+      return await handleReschedule(args);
+    case 'cancelAppointment':
+      return await handleCancel(args);
+    case 'handleEmergency':
+      return await handleEmergency(args);
+    default:
+      logger.warn(`Unknown function: ${name}`);
+      return `Function ${name} is not available.`;
+  }
+}
+
 // ── Tool handlers ─────────────────────────────────────────────────────────────
 
 async function handleBookAppointment(data) {
   const requestId = uuidv4();
-  logger.info(`[${requestId}] Booking: ${data.patientName}`);
+  logger.info(`[BOOK] ${data.patientName} | ${requestId}`);
 
-  // Save to sheets (don't fail if this errors)
   try {
     await sheetsService.saveAppointment({
       ...data,
@@ -98,14 +143,12 @@ async function handleBookAppointment(data) {
     logger.warn(`Sheet save failed: ${err.message}`);
   }
 
-  // Send emails (non-blocking)
   try {
-    emailService.sendAppointmentEmails(data).catch(e => 
+    emailService.sendAppointmentEmails(data).catch(e =>
       logger.warn(`Email failed: ${e.message}`)
     );
   } catch (err) { /* ignore */ }
 
-  // Log call
   sheetsService.saveCallLog({
     callId: requestId,
     callType: 'APPOINTMENT',
@@ -129,7 +172,7 @@ async function handleCancel(data) {
 }
 
 async function handleEmergency(data) {
-  logger.error(`🚨 EMERGENCY: ${data.patientName} | ${data.severity} | ${data.symptoms}`);
+  logger.error(`EMERGENCY: ${data.patientName} | ${data.severity} | ${data.symptoms}`);
   try { await sheetsService.saveEmergency(data); } catch (e) { logger.warn(e.message); }
   try { emailService.sendEmergencyEmails(data).catch(() => {}); } catch (e) { /* ignore */ }
   return `Emergency recorded for ${data.patientName}. Severity: ${data.severity}. Staff notified.`;
