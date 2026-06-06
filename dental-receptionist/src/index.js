@@ -56,11 +56,22 @@ app.use(rateLimiter);
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/health', healthRoutes);                        // public
 app.use('/vapi', vapiRoutes);                            // Vapi webhook (own auth)
-app.use('/appointments', apiKeyAuth, vapiParser, appointmentRoutes);
-app.use('/reschedule', apiKeyAuth, vapiParser, rescheduleRoutes);
-app.use('/cancel', apiKeyAuth, vapiParser, cancelRoutes);
-app.use('/emergency', apiKeyAuth, vapiParser, emergencyRoutes);
+
+// Vapi tool endpoints — vapiParser first to ensure Vapi-format responses
+app.use('/appointments', vapiParser, apiKeyAuth, appointmentRoutes);
+app.use('/reschedule', vapiParser, apiKeyAuth, rescheduleRoutes);
+app.use('/cancel', vapiParser, apiKeyAuth, cancelRoutes);
+app.use('/emergency', vapiParser, apiKeyAuth, emergencyRoutes);
 app.use('/send-email', apiKeyAuth, emailRoutes);
+
+// Debug endpoint — test if Vapi can receive responses
+app.post('/debug-tool', (req, res) => {
+  logger.info(`[DEBUG] Body: ${JSON.stringify(req.body).substring(0, 500)}`);
+  const toolCallId = req.body?.message?.toolCallList?.[0]?.id || '';
+  res.status(200).json({
+    results: [{ toolCallId, result: 'Debug test successful!' }]
+  });
+});
 
 // ── 404 handler ───────────────────────────────────────────────────────────────
 app.use((req, res) => {
