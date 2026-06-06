@@ -11,7 +11,7 @@ const nameValidator = body('patientName')
 const phoneValidator = body('phone')
   .trim()
   .notEmpty().withMessage('Phone required')
-  .matches(/^\+?1?[-.\s]?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$/).withMessage('Valid US phone required');
+  .matches(/^[\+]?[\d\s\-\(\)\.]{7,20}$/).withMessage('Valid phone number required');
 
 const emailValidator = body('email')
   .trim()

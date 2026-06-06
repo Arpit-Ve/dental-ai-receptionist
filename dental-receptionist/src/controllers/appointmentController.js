@@ -2,6 +2,7 @@ const { v4: uuidv4 } = require('uuid');
 const logger = require('../utils/logger');
 const sheetsService = require('../services/sheetsService');
 const emailService = require('../services/emailService');
+const { vapiResponse } = require('../middleware/vapiParser');
 
 const bookAppointment = async (req, res) => {
   const requestId = uuidv4();
@@ -34,6 +35,13 @@ const bookAppointment = async (req, res) => {
     outcome: 'BOOKED',
     summary: `New ${data.patientType} patient. Reason: ${data.reasonForVisit}. Preferred: ${data.preferredDate || 'Flexible'} ${data.preferredTime || ''}`,
   }).catch(err => logger.warn(`Call log failed: ${err.message}`));
+
+  // Return Vapi-compatible response if it's a Vapi call
+  if (req.isVapiCall) {
+    return vapiResponse(req, res, {
+      message: `Appointment booked successfully for ${data.patientName}. Date: ${data.preferredDate || 'Flexible'}, Time: ${data.preferredTime || 'Flexible'}. Confirmation pending.`,
+    });
+  }
 
   return res.status(201).json({
     success: true,

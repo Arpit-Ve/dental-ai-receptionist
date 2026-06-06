@@ -2,6 +2,7 @@ const { v4: uuidv4 } = require('uuid');
 const logger = require('../utils/logger');
 const sheetsService = require('../services/sheetsService');
 const emailService = require('../services/emailService');
+const { vapiResponse } = require('../middleware/vapiParser');
 
 const rescheduleAppointment = async (req, res) => {
   const requestId = uuidv4();
@@ -34,6 +35,12 @@ const rescheduleAppointment = async (req, res) => {
     outcome: 'RESCHEDULED',
     summary: `Reschedule from ${data.existingDate} to ${data.newDate} ${data.newTime}`,
   }).catch(err => logger.warn(`Call log failed: ${err.message}`));
+
+  if (req.isVapiCall) {
+    return vapiResponse(req, res, {
+      message: `Reschedule request saved for ${data.patientName}. New date: ${data.newDate || 'Flexible'}, Time: ${data.newTime || 'Flexible'}.`,
+    });
+  }
 
   return res.status(200).json({
     success: true,

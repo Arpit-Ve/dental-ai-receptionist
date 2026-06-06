@@ -2,6 +2,7 @@ const { v4: uuidv4 } = require('uuid');
 const logger = require('../utils/logger');
 const sheetsService = require('../services/sheetsService');
 const emailService = require('../services/emailService');
+const { vapiResponse } = require('../middleware/vapiParser');
 
 const cancelAppointment = async (req, res) => {
   const requestId = uuidv4();
@@ -33,6 +34,12 @@ const cancelAppointment = async (req, res) => {
     outcome: 'CANCELLED',
     summary: `Appointment on ${data.appointmentDate} cancelled. Reason: ${data.reason || 'Not provided'}`,
   }).catch(err => logger.warn(`Call log failed: ${err.message}`));
+
+  if (req.isVapiCall) {
+    return vapiResponse(req, res, {
+      message: `Cancellation recorded for ${data.patientName}. Appointment on ${data.appointmentDate || 'scheduled date'} has been cancelled.`,
+    });
+  }
 
   return res.status(200).json({
     success: true,

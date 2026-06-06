@@ -10,6 +10,7 @@ const logger = require('./utils/logger');
 const errorHandler = require('./middleware/errorHandler');
 const rateLimiter = require('./middleware/rateLimiter');
 const apiKeyAuth = require('./middleware/apiKeyAuth');
+const { vapiParser } = require('./middleware/vapiParser');
 
 const appointmentRoutes = require('./routes/appointments');
 const rescheduleRoutes = require('./routes/reschedule');
@@ -55,10 +56,10 @@ app.use(rateLimiter);
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/health', healthRoutes);                        // public
 app.use('/vapi', vapiRoutes);                            // Vapi webhook (own auth)
-app.use('/appointments', apiKeyAuth, appointmentRoutes);
-app.use('/reschedule', apiKeyAuth, rescheduleRoutes);
-app.use('/cancel', apiKeyAuth, cancelRoutes);
-app.use('/emergency', apiKeyAuth, emergencyRoutes);
+app.use('/appointments', apiKeyAuth, vapiParser, appointmentRoutes);
+app.use('/reschedule', apiKeyAuth, vapiParser, rescheduleRoutes);
+app.use('/cancel', apiKeyAuth, vapiParser, cancelRoutes);
+app.use('/emergency', apiKeyAuth, vapiParser, emergencyRoutes);
 app.use('/send-email', apiKeyAuth, emailRoutes);
 
 // ── 404 handler ───────────────────────────────────────────────────────────────

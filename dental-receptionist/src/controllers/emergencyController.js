@@ -2,6 +2,7 @@ const { v4: uuidv4 } = require('uuid');
 const logger = require('../utils/logger');
 const sheetsService = require('../services/sheetsService');
 const emailService = require('../services/emailService');
+const { vapiResponse } = require('../middleware/vapiParser');
 
 const handleEmergency = async (req, res) => {
   const requestId = uuidv4();
@@ -32,16 +33,17 @@ const handleEmergency = async (req, res) => {
     summary: `🚨 EMERGENCY: ${data.severity?.toUpperCase()}. Symptoms: ${data.symptoms}`,
   }).catch(err => logger.warn(`Call log failed: ${err.message}`));
 
+  if (req.isVapiCall) {
+    return vapiResponse(req, res, {
+      message: `Emergency recorded for ${data.patientName}. Severity: ${data.severity}. Staff has been notified immediately.`,
+    });
+  }
+
   return res.status(201).json({
     success: true,
     message: 'Emergency recorded. Staff notified immediately.',
     requestId,
     priority: 'URGENT',
-    nextSteps: [
-      'Staff has been notified via email',
-      'Patient should call back if no response in 5 minutes',
-      'If life-threatening: call 911',
-    ],
   });
 };
 
