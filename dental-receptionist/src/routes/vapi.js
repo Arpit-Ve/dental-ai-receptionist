@@ -13,6 +13,25 @@ router.get('/last-request', (req, res) => {
   res.json(lastWebhookRequest || { message: 'No webhook request received yet' });
 });
 
+// Debug endpoint to test sending email
+router.get('/test-email', async (req, res) => {
+  try {
+    logger.info('[TEST-EMAIL] Triggering test email...');
+    const result = await emailService.sendAppointmentEmails({
+      patientName: 'Test Patient',
+      email: 'vermaarpit627@gmail.com',
+      patientType: 'new',
+      reasonForVisit: 'Routine checkup testing email service',
+      preferredDate: '2026-06-15',
+      preferredTime: '10:00 AM'
+    });
+    res.json({ success: true, message: 'Emails sent successfully', result });
+  } catch (err) {
+    logger.error(`[TEST-EMAIL] Failed: ${err.message}`);
+    res.status(500).json({ success: false, error: err.message, stack: err.stack });
+  }
+});
+
 // ── Vapi webhook handler ───────────────────────────────────────────────────────
 router.post('/webhook', async (req, res) => {
   const body = req.body || {};
