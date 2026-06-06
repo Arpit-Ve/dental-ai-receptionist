@@ -32,6 +32,34 @@ router.get('/test-email', async (req, res) => {
   }
 });
 
+// Debug endpoint to check env configuration
+router.get('/env-check', (req, res) => {
+  const vars = [
+    'GMAIL_CLIENT_ID',
+    'GMAIL_CLIENT_SECRET',
+    'GMAIL_REFRESH_TOKEN',
+    'GMAIL_FROM_ADDRESS',
+    'GMAIL_FROM_NAME',
+    'STAFF_EMAIL',
+    'STAFF_EMERGENCY_EMAIL',
+    'GOOGLE_SPREADSHEET_ID',
+    'GOOGLE_SERVICE_ACCOUNT_EMAIL',
+    'GOOGLE_PRIVATE_KEY'
+  ];
+  
+  const status = {};
+  vars.forEach(v => {
+    const val = process.env[v];
+    status[v] = {
+      configured: !!val,
+      length: val ? val.length : 0,
+      prefix: val ? val.substring(0, 5) + '...' : null
+    };
+  });
+  
+  res.json({ success: true, env: status });
+});
+
 // ── Vapi webhook handler ───────────────────────────────────────────────────────
 router.post('/webhook', async (req, res) => {
   const body = req.body || {};
