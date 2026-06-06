@@ -1,50 +1,62 @@
 const logger = require('../utils/logger');
 
 /**
- * Middleware to parse Vapi's tool call format.
- * Vapi may send data in multiple formats depending on tool config.
- * This middleware handles all cases.
+ * Middleware to parse Vapi's tool-calls request format.
+ * 
+ * Vapi sends (from docs):
+ * {
+ *   "message": {
+ *     "type": "tool-calls",
+ *     "toolCallList": [{ "id": "...", "name": "...", "arguments": { ... } }]
+ *   }
+ * }
+ *
+ * Backend expects: req.body = { patientName, phone, ... }
  */
 const vapiParser = (req, res, next) => {
-  // Log the raw request for debugging
-  logger.info(`[VapiParser] Path: ${req.path} | Headers: ${JSON.stringify({
-    'x-vapi-signature': req.headers['x-vapi-signature'] || 'none',
-    'content-type': req.headers['content-type'] || 'none',
-  })}`);
-  logger.info(`[VapiParser] Body keys: ${JSON.stringify(Object.keys(req.body || {}))}`);
-  
   // Always mark as Vapi call since these endpoints are only called by Vapi
   req.isVapiCall = true;
   req.vapiToolCallId = '';
   
-  // Format 1: Vapi wraps in message.functionCall.parameters
-  if (req.body?.message?.functionCall?.parameters) {
-    const params = req.body.message.functionCall.parameters;
-    req.vapiToolCallId = req.body.message?.toolCallList?.[0]?.id || 
-                         req.body.message?.toolCallId || '';
+  const body = req.body || {};
+  
+  // Log for debugging
+  logger.info(`[VapiParser] Path: ${req.path} | Body keys: ${JSON.stringify(Object.keys(body))}`);
+  
+  // PRIMARY FORMAT: message.toolCallList (from Vapi docs)
+  if (body.message?.toolCallList?.[0]) {
+    const toolCall = body.message.toolCallList[0];
+    req.vapiToolCallId = toolCall.id || '';
     
-    logger.info(`[VapiParser] Format 1 (message wrapped) — Tool: ${req.body.message.functionCall.name} | ToolCallId: ${req.vapiToolCallId}`);
+    // Arguments can be in toolCallList[0].arguments
+    let params = toolCall.arguments;
     
-    req.vapiOriginalBody = req.body;
-    req.body = params;
-  }
-  // Format 2: Vapi sends toolCallList at top level
-  else if (req.body?.toolCallList) {
-    const toolCall = req.body.toolCallList[0];
-    req.vapiToolCallId = toolCall?.id || '';
-    const args = toolCall?.function?.arguments;
-    
-    if (typeof args === 'string') {
-      try { req.body = JSON.parse(args); } catch(e) { /* keep original */ }
-    } else if (args && typeof args === 'object') {
-      req.body = args;
+    // Or in toolWithToolCallList[0].toolCall.function.parameters
+    if (!params && body.message?.toolWithToolCallList?.[0]?.toolCall?.function?.parameters) {
+      params = body.message.toolWithToolCallList[0].toolCall.function.parameters;
     }
     
-    logger.info(`[VapiParser] Format 2 (toolCallList) — ToolCallId: ${req.vapiToolCallId}`);
+    if (params && typeof params === 'object') {
+      logger.info(`[VapiParser] ✅ Extracted from toolCallList — Tool: ${toolCall.name} | ID: ${req.vapiToolCallId} | Params: ${JSON.stringify(params).substring(0, 200)}`);
+      req.vapiOriginalBody = body;
+      req.body = params;
+    } else {
+      logger.warn(`[VapiParser] ⚠️ toolCallList found but no arguments — Tool: ${toolCall.name}`);
+    }
   }
-  // Format 3: Direct parameters (no wrapping)
+  // FALLBACK: message.functionCall.parameters (older format)
+  else if (body.message?.functionCall?.parameters) {
+    const params = body.message.functionCall.parameters;
+    req.vapiToolCallId = body.message.toolCallList?.[0]?.id || 
+                         body.message.toolCallId || '';
+    
+    logger.info(`[VapiParser] ✅ Extracted from functionCall — Tool: ${body.message.functionCall.name} | ID: ${req.vapiToolCallId}`);
+    req.vapiOriginalBody = body;
+    req.body = params;
+  }
+  // DIRECT: parameters sent directly in body (no message wrapper)
   else {
-    logger.info(`[VapiParser] Format 3 (direct params) — Body: ${JSON.stringify(req.body).substring(0, 200)}`);
+    logger.info(`[VapiParser] Direct params — Body preview: ${JSON.stringify(body).substring(0, 300)}`);
   }
   
   next();
@@ -61,7 +73,7 @@ const vapiResponse = (req, res, data) => {
       result: typeof data.message === 'string' ? data.message : JSON.stringify(data.message || 'Done'),
     }],
   };
-  logger.info(`[VapiResponse] Sending: ${JSON.stringify(response)}`);
+  logger.info(`[VapiResponse] toolCallId: ${req.vapiToolCallId} | result: ${response.results[0].result.substring(0, 100)}`);
   return res.status(200).json(response);
 };
 
