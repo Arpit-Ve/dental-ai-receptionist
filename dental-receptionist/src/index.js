@@ -72,8 +72,19 @@ app.use(errorHandler);
 
 // ── Start server ──────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
-  logger.info(`🦷 Dental AI Receptionist backend running on port ${PORT}`);
+  logger.info(`🚀 AI Assistant backend running on port ${PORT}`);
   logger.info(`Environment: ${process.env.NODE_ENV}`);
+  
+  // Keep Render free tier awake by self-pinging every 13 minutes
+  if (process.env.RENDER_EXTERNAL_URL || process.env.NODE_ENV === 'production') {
+    const PING_URL = process.env.RENDER_EXTERNAL_URL || 'https://dental-ai-receptionist-ofcw.onrender.com';
+    setInterval(() => {
+      fetch(`${PING_URL}/health`)
+        .then(() => logger.debug('Keep-alive ping OK'))
+        .catch(() => logger.debug('Keep-alive ping failed'));
+    }, 13 * 60 * 1000); // Every 13 minutes
+    logger.info(`Keep-alive ping enabled → ${PING_URL}/health every 13 min`);
+  }
 });
 
 module.exports = app;
