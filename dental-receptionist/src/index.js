@@ -64,12 +64,53 @@ app.use('/cancel', vapiParser, apiKeyAuth, cancelRoutes);
 app.use('/emergency', vapiParser, apiKeyAuth, emergencyRoutes);
 app.use('/send-email', apiKeyAuth, emailRoutes);
 
-// Debug endpoint — test if Vapi can receive responses
+// Request capture for debugging
+let lastVapiRequest = null;
+
+// Capture endpoint — stores last request for inspection
 app.post('/debug-tool', (req, res) => {
-  logger.info(`[DEBUG] Body: ${JSON.stringify(req.body).substring(0, 500)}`);
+  lastVapiRequest = {
+    timestamp: new Date().toISOString(),
+    headers: req.headers,
+    body: req.body,
+    bodyString: JSON.stringify(req.body).substring(0, 2000),
+  };
+  logger.info(`[DEBUG-CAPTURE] Stored request at ${lastVapiRequest.timestamp}`);
   const toolCallId = req.body?.message?.toolCallList?.[0]?.id || '';
   res.status(200).json({
     results: [{ toolCallId, result: 'Debug test successful!' }]
+  });
+});
+
+// View last captured request
+app.get('/debug-last', (req, res) => {
+  res.json(lastVapiRequest || { message: 'No request captured yet' });
+});
+
+// SIMPLE appointment endpoint — no validation, no sheets, just responds
+app.post('/book-simple', (req, res) => {
+  const body = req.body || {};
+  logger.info(`[BOOK-SIMPLE] Raw body keys: ${JSON.stringify(Object.keys(body))}`);
+  
+  let toolCallId = '';
+  let name = 'Unknown';
+  
+  // Extract from Vapi format
+  if (body.message?.toolCallList?.[0]) {
+    toolCallId = body.message.toolCallList[0].id || '';
+    const args = body.message.toolCallList[0].arguments || {};
+    name = args.patientName || 'Unknown';
+  } else if (body.patientName) {
+    name = body.patientName;
+  }
+  
+  logger.info(`[BOOK-SIMPLE] toolCallId: ${toolCallId} | name: ${name}`);
+  
+  // Store for debugging
+  lastVapiRequest = { timestamp: new Date().toISOString(), body, toolCallId };
+  
+  res.status(200).json({
+    results: [{ toolCallId, result: `Appointment booked for ${name}. We will confirm shortly.` }]
   });
 });
 
