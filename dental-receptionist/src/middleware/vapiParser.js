@@ -28,8 +28,18 @@ const vapiParser = (req, res, next) => {
     const toolCall = body.message.toolCallList[0];
     req.vapiToolCallId = toolCall.id || '';
     
-    // Arguments can be in toolCallList[0].arguments
-    let params = toolCall.arguments;
+    // Arguments can be in toolCall.function.arguments or toolCall.arguments
+    let params = toolCall.function?.arguments || toolCall.arguments;
+    
+    // Parse arguments if they are passed as a JSON string
+    if (typeof params === 'string') {
+      try {
+        params = JSON.parse(params);
+      } catch (e) {
+        logger.error(`[VapiParser] Failed to parse arguments string: ${params}`);
+        params = null;
+      }
+    }
     
     // Or in toolWithToolCallList[0].toolCall.function.parameters
     if (!params && body.message?.toolWithToolCallList?.[0]?.toolCall?.function?.parameters) {
@@ -37,11 +47,13 @@ const vapiParser = (req, res, next) => {
     }
     
     if (params && typeof params === 'object') {
-      logger.info(`[VapiParser] ✅ Extracted from toolCallList — Tool: ${toolCall.name} | ID: ${req.vapiToolCallId} | Params: ${JSON.stringify(params).substring(0, 200)}`);
+      const toolName = toolCall.function?.name || toolCall.name || 'unknown';
+      logger.info(`[VapiParser] ✅ Extracted from toolCallList — Tool: ${toolName} | ID: ${req.vapiToolCallId} | Params: ${JSON.stringify(params).substring(0, 200)}`);
       req.vapiOriginalBody = body;
       req.body = params;
     } else {
-      logger.warn(`[VapiParser] ⚠️ toolCallList found but no arguments — Tool: ${toolCall.name}`);
+      const toolName = toolCall.function?.name || toolCall.name || 'unknown';
+      logger.warn(`[VapiParser] ⚠️ toolCallList found but no arguments — Tool: ${toolName}`);
     }
   }
   // FALLBACK: message.functionCall.parameters (older format)

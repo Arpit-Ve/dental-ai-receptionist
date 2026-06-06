@@ -42,12 +42,25 @@ router.post('/webhook', async (req, res) => {
       const results = [];
 
       for (const toolCall of toolCallList) {
-        const { id, name, arguments: args } = toolCall;
-        logger.info(`[TOOL-CALLS] ${name} | ID: ${id}`);
+        const id = toolCall.id || '';
+        const name = toolCall.function?.name || toolCall.name || 'unknown';
+        let args = toolCall.function?.arguments || toolCall.arguments || {};
+
+        // Parse arguments if they are passed as a JSON string
+        if (typeof args === 'string') {
+          try {
+            args = JSON.parse(args);
+          } catch (e) {
+            logger.error(`[TOOL-CALLS] Failed to parse arguments string: ${args}`);
+            args = {};
+          }
+        }
+
+        logger.info(`[TOOL-CALLS] Executing: ${name} | ID: ${id} | Args: ${JSON.stringify(args).substring(0, 200)}`);
 
         let result = '';
         try {
-          result = await routeToolCall(name, args || {});
+          result = await routeToolCall(name, args);
         } catch (err) {
           logger.error(`[TOOL-CALLS] ${name} error: ${err.message}`);
           result = 'Request noted. Arpit will follow up shortly.';
@@ -63,10 +76,18 @@ router.post('/webhook', async (req, res) => {
     case 'function-call': {
       const fn = message.functionCall || {};
       const name = fn.name || 'unknown';
-      const args = fn.parameters || {};
+      let args = fn.parameters || {};
       const toolCallId = message.toolCallList?.[0]?.id || '';
 
-      logger.info(`[FUNCTION-CALL] ${name} | ID: ${toolCallId}`);
+      if (typeof args === 'string') {
+        try {
+          args = JSON.parse(args);
+        } catch (e) {
+          args = {};
+        }
+      }
+
+      logger.info(`[FUNCTION-CALL] Executing: ${name} | ID: ${toolCallId}`);
 
       let result = '';
       try {
