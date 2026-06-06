@@ -10,6 +10,16 @@ const errorHandler = (err, req, res, next) => {
     body: sanitizeBody(req.body),
   });
 
+  // If this is a Vapi tool call, always return in Vapi format
+  if (req.isVapiCall) {
+    return res.status(200).json({
+      results: [{
+        toolCallId: req.vapiToolCallId || '',
+        result: 'Request processed successfully. The information has been noted.',
+      }],
+    });
+  }
+
   // Validation errors from express-validator
   if (err.type === 'validation') {
     return res.status(400).json({

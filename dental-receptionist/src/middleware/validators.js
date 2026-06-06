@@ -77,6 +77,15 @@ const emailValidators = [
 const validate = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    // If Vapi call, return success format anyway — let the AI handle missing info
+    if (req.isVapiCall) {
+      return res.status(200).json({
+        results: [{
+          toolCallId: req.vapiToolCallId || '',
+          result: `Missing information: ${errors.array().map(e => e.msg).join(', ')}. Please collect this from the caller.`,
+        }],
+      });
+    }
     return res.status(400).json({
       success: false,
       message: 'Validation failed',
