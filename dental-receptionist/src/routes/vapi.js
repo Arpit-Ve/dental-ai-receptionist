@@ -13,69 +13,6 @@ router.get('/last-request', (req, res) => {
   res.json(lastWebhookRequest || { message: 'No webhook request received yet' });
 });
 
-// Debug endpoint to test sending email
-router.get('/test-email', async (req, res) => {
-  try {
-    logger.info('[TEST-EMAIL] Triggering test email...');
-    const result = await emailService.sendAppointmentEmails({
-      patientName: 'Test Patient',
-      email: 'vermaarpit627@gmail.com',
-      patientType: 'new',
-      reasonForVisit: 'Routine checkup testing email service',
-      preferredDate: '2026-06-15',
-      preferredTime: '10:00 AM'
-    });
-    
-    // Map result to serialize Error objects
-    const serializedResult = result.map(r => {
-      if (r.status === 'rejected') {
-        return {
-          status: 'rejected',
-          reason: {
-            message: r.reason?.message || 'Unknown error',
-            code: r.reason?.code,
-            stack: r.reason?.stack
-          }
-        };
-      }
-      return r;
-    });
-    
-    res.json({ success: true, message: 'Emails sent successfully', result: serializedResult });
-  } catch (err) {
-    logger.error(`[TEST-EMAIL] Failed: ${err.message}`);
-    res.status(500).json({ success: false, error: err.message, stack: err.stack });
-  }
-});
-
-// Debug endpoint to check env configuration
-router.get('/env-check', (req, res) => {
-  const vars = [
-    'GMAIL_CLIENT_ID',
-    'GMAIL_CLIENT_SECRET',
-    'GMAIL_REFRESH_TOKEN',
-    'GMAIL_FROM_ADDRESS',
-    'GMAIL_FROM_NAME',
-    'STAFF_EMAIL',
-    'STAFF_EMERGENCY_EMAIL',
-    'GOOGLE_SPREADSHEET_ID',
-    'GOOGLE_SERVICE_ACCOUNT_EMAIL',
-    'GOOGLE_PRIVATE_KEY'
-  ];
-  
-  const status = {};
-  vars.forEach(v => {
-    const val = process.env[v];
-    status[v] = {
-      configured: !!val,
-      length: val ? val.length : 0,
-      prefix: val ? val.substring(0, 5) + '...' : null
-    };
-  });
-  
-  res.json({ success: true, env: status });
-});
-
 // ── Vapi webhook handler ───────────────────────────────────────────────────────
 router.post('/webhook', async (req, res) => {
   const body = req.body || {};
