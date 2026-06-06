@@ -25,7 +25,23 @@ router.get('/test-email', async (req, res) => {
       preferredDate: '2026-06-15',
       preferredTime: '10:00 AM'
     });
-    res.json({ success: true, message: 'Emails sent successfully', result });
+    
+    // Map result to serialize Error objects
+    const serializedResult = result.map(r => {
+      if (r.status === 'rejected') {
+        return {
+          status: 'rejected',
+          reason: {
+            message: r.reason?.message || 'Unknown error',
+            code: r.reason?.code,
+            stack: r.reason?.stack
+          }
+        };
+      }
+      return r;
+    });
+    
+    res.json({ success: true, message: 'Emails sent successfully', result: serializedResult });
   } catch (err) {
     logger.error(`[TEST-EMAIL] Failed: ${err.message}`);
     res.status(500).json({ success: false, error: err.message, stack: err.stack });
