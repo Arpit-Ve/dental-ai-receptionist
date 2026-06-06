@@ -4,10 +4,19 @@ const logger = require('../utils/logger');
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
 const getAuth = () => {
+  let privateKey = process.env.GOOGLE_PRIVATE_KEY || '';
+  
+  // Handle different newline formats:
+  // - .env files: key has literal \n characters (escaped)
+  // - Render/Heroku: key may have real newlines or escaped ones
+  if (privateKey.includes('\\n') && !privateKey.includes('\n-----')) {
+    privateKey = privateKey.replace(/\\n/g, '\n');
+  }
+  
   return new google.auth.JWT(
     process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
     null,
-    process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    privateKey,
     ['https://www.googleapis.com/auth/spreadsheets']
   );
 };
